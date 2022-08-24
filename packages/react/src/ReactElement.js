@@ -144,6 +144,7 @@ function warnIfStringRefCannotBeAutoConverted(config) {
  * @internal
  */
 const ReactElement = function(type, key, ref, self, source, owner, props) {
+  // jsx 对象, react element 对象, virtual dom
   const element = {
     // This tag allows us to uniquely identify this as a React Element
     $$typeof: REACT_ELEMENT_TYPE,
@@ -152,7 +153,7 @@ const ReactElement = function(type, key, ref, self, source, owner, props) {
     type: type,
     key: key,
     ref: ref,
-    props: props,
+    props: props, // 储存节点属性与子节点
 
     // Record the component responsible for creating this element.
     _owner: owner,
@@ -345,6 +346,7 @@ export function jsxDEV(type, config, maybeKey, source, self) {
  * Create and return a new ReactElement of the given type.
  * See https://reactjs.org/docs/react-api.html#createelement
  */
+// React.createElement 方法, 创建 react element 对象
 export function createElement(type, config, children) {
   let propName;
 
@@ -383,6 +385,7 @@ export function createElement(type, config, children) {
 
   // Children can be more than one argument, and those are transferred onto
   // the newly allocated props object.
+  // 处理子节点
   const childrenLength = arguments.length - 2;
   if (childrenLength === 1) {
     props.children = children;
