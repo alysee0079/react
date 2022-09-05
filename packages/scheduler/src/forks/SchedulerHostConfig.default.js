@@ -11,7 +11,7 @@ export let requestHostCallback;
 export let cancelHostCallback;
 export let requestHostTimeout;
 export let cancelHostTimeout;
-export let shouldYieldToHost;
+export let shouldYieldToHost; // 是否让出主线程(currentTime >= deadline && needsPaint): 让浏览器能够执行更高优先级的任务(如ui绘制, 用户输入等)
 export let requestPaint;
 export let getCurrentTime;
 export let forceFrameRate;
@@ -182,15 +182,18 @@ if (
     }
   };
 
+  // 接收 MessageChannel 消息
   const performWorkUntilDeadline = () => {
     if (scheduledHostCallback !== null) {
       const currentTime = getCurrentTime();
       // Yield after `yieldInterval` ms, regardless of where we are in the vsync
       // cycle. This means there's always time remaining at the beginning of
       // the message event.
+      // 更新deadline
       deadline = currentTime + yieldInterval;
       const hasTimeRemaining = true;
       try {
+        // 执行callback
         const hasMoreWork = scheduledHostCallback(
           hasTimeRemaining,
           currentTime,
@@ -221,24 +224,30 @@ if (
   const port = channel.port2;
   channel.port1.onmessage = performWorkUntilDeadline;
 
+  // 请求及时回调
   requestHostCallback = function(callback) {
+    // 1. 保存callback, 会在 performWorkUntilDeadline 中执行
     scheduledHostCallback = callback;
     if (!isMessageLoopRunning) {
       isMessageLoopRunning = true;
+      // 2. 通过 MessageChannel 发送消息
       port.postMessage(null);
     }
   };
 
+  // 取消及时回调
   cancelHostCallback = function() {
     scheduledHostCallback = null;
   };
 
+  // 请求延时回调
   requestHostTimeout = function(callback, ms) {
     taskTimeoutID = setTimeout(() => {
       callback(getCurrentTime());
     }, ms);
   };
 
+  // 取消延时回调
   cancelHostTimeout = function() {
     clearTimeout(taskTimeoutID);
     taskTimeoutID = -1;
