@@ -59,10 +59,12 @@ import {
   LegacyRoot,
 } from 'react-reconciler/src/ReactRootTags';
 
+//全局对象  ReactDOMRoot 对象(concurrentRoot 模式)
 function ReactDOMRoot(container: Container, options: void | RootOptions) {
   this._internalRoot = createRootImpl(container, ConcurrentRoot, options);
 }
 
+// 全局对象 ReactDOMBlockingRoot 对象(legacy, blocking 模式)
 function ReactDOMBlockingRoot(
   container: Container,
   tag: RootTag,
