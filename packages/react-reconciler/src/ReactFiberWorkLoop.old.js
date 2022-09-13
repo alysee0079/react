@@ -562,6 +562,7 @@ export function scheduleUpdateOnFiber(
   const priorityLevel = getCurrentPriorityLevel();
 
   if (lane === SyncLane) {
+    // legacy/blocking 模式
     if (
       // 是否非批处理
       // Check if we're inside unbatchedUpdates
