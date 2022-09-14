@@ -562,9 +562,12 @@ export function scheduleUpdateOnFiber(
   const priorityLevel = getCurrentPriorityLevel();
 
   if (lane === SyncLane) {
+    // legacy/blocking 模式
     if (
+      // 是否非批处理
       // Check if we're inside unbatchedUpdates
       (executionContext & LegacyUnbatchedContext) !== NoContext &&
+      // 是否未渲染或者提交
       // Check if we're not already rendering
       (executionContext & (RenderContext | CommitContext)) === NoContext
     ) {
@@ -574,11 +577,16 @@ export function scheduleUpdateOnFiber(
       // This is a legacy edge case. The initial mount of a ReactDOM.render-ed
       // root inside of batchedUpdates should be synchronous, but layout updates
       // should be deferred until the end of the batch.
+      // legacy或blocking模式直接进行 fiber 数构造
       performSyncWorkOnRoot(root);
     } else {
+      // 后续的更新
+      // 进入第2阶段, 注册调度任务
       ensureRootIsScheduled(root, eventTime);
       schedulePendingInteractions(root, lane);
       if (executionContext === NoContext) {
+        // 如果执行上下文为空, 会取消调度任务, 手动执行回调
+        // 进入第3阶段, 进行fiber树构造
         // Flush the synchronous work now, unless we're already working or inside
         // a batch. This is intentionally inside scheduleUpdateOnFiber instead of
         // scheduleCallbackForFiber to preserve the ability to schedule a callback
