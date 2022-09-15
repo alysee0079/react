@@ -27,9 +27,25 @@ describe('ReactCompositeComponent', () => {
    * Returns true when the values of all keys are strictly equal.
    */
   function shallowEqual(objA: mixed, objB: mixed): boolean {
+    // 1. 相同的引用地址
+    /**
+     * 都是 undefined
+     * 都是 null
+     * 都是 true 或都是 false
+     * 都是相同长度、相同字符、按相同顺序排列的字符串
+     * 都是相同对象（意味着都是同一个对象的值引用）
+     * 都是数字且
+     * 都是 +0
+     * 都是 -0
+     * 都是 NaN
+     * 都是同一个值，非零且都不是 NaN
+     */
     if (Object.is(objA, objB)) {
+      // 是同一个值
       return true;
     }
+    // 如果不是对象, 则两个值肯定是不同的
+    // 如果是对象, 且其中一个为 null, 则两个值肯定是不同的
     if (
       typeof objA !== 'object' ||
       objA === null ||
@@ -38,12 +54,18 @@ describe('ReactCompositeComponent', () => {
     ) {
       return false;
     }
+
+    // 2. 不同的引用地址
+    // 如果是对象, 且都不为 null
     const keysA = Object.keys(objA);
     const keysB = Object.keys(objB);
+    // key 的数量是否相同, 不同则认为改变了
     if (keysA.length !== keysB.length) {
       return false;
     }
     for (let i = 0; i < keysA.length; i++) {
+      // 对比两个对象的每一个 key 是否都能够再对方中找到, 如果找不到, 则认为值改变了
+      // 对比两个对象的每一个 key 的 value 是否相同, 如果不同则认为值改变了
       if (
         !hasOwnProperty.call(objB, keysA[i]) ||
         !Object.is(objA[keysA[i]], objB[keysA[i]])
