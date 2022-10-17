@@ -59,8 +59,8 @@ var LOW_PRIORITY_TIMEOUT = 10000;
 var IDLE_PRIORITY_TIMEOUT = maxSigned31BitInt;
 
 // Tasks are stored on a min heap
-var taskQueue = [];
-var timerQueue = [];
+var taskQueue = []; // 过期任务队列
+var timerQueue = []; // 未过期任务队列
 
 // Incrementing id counter. Used to maintain insertion order.
 var taskIdCounter = 1;
@@ -282,12 +282,15 @@ function unstable_wrapCallback(callback) {
 function unstable_scheduleCallback(priorityLevel, callback, options) {
   var currentTime = getCurrentTime();
 
+  // 任务开始时间
   var startTime;
   if (typeof options === 'object' && options !== null) {
     var delay = options.delay;
     if (typeof delay === 'number' && delay > 0) {
+      // 开始时间 = 当前时间 + 延迟时间
       startTime = currentTime + delay;
     } else {
+      // 开始时间 = 当前时间
       startTime = currentTime;
     }
   } else {
@@ -295,6 +298,7 @@ function unstable_scheduleCallback(priorityLevel, callback, options) {
   }
 
   var timeout;
+  // 任务优先级, 优先级越高, timeout 越小(立即执行为负数)
   switch (priorityLevel) {
     case ImmediatePriority:
       timeout = IMMEDIATE_PRIORITY_TIMEOUT;
@@ -314,6 +318,7 @@ function unstable_scheduleCallback(priorityLevel, callback, options) {
       break;
   }
 
+  // 任务过期时间 = 开始时间 + 超时时间
   var expirationTime = startTime + timeout;
 
   var newTask = {
@@ -331,8 +336,10 @@ function unstable_scheduleCallback(priorityLevel, callback, options) {
   if (startTime > currentTime) {
     // This is a delayed task.
     newTask.sortIndex = startTime;
+    // 如果任务开始时间大于当前时间, 说明该任务还未过期(延时), 将其放到未就绪列表
     push(timerQueue, newTask);
     if (peek(taskQueue) === null && newTask === peek(timerQueue)) {
+      // 没有有过期的任务, 同时当前任务是离过期时间最接近的任务
       // All tasks are delayed, and this is the task with the earliest delay.
       if (isHostTimeoutScheduled) {
         // Cancel an existing timeout.
@@ -341,10 +348,12 @@ function unstable_scheduleCallback(priorityLevel, callback, options) {
         isHostTimeoutScheduled = true;
       }
       // Schedule a timeout.
+      // 定时检测未过期任务是否过期, 是否需要加入到过期任务队列
       requestHostTimeout(handleTimeout, startTime - currentTime);
     }
   } else {
     newTask.sortIndex = expirationTime;
+    // 任务已经过期, 将其放到过期任务列表
     push(taskQueue, newTask);
     if (enableProfiling) {
       markTaskStart(newTask, currentTime);
@@ -354,6 +363,7 @@ function unstable_scheduleCallback(priorityLevel, callback, options) {
     // wait until the next time we yield.
     if (!isHostCallbackScheduled && !isPerformingWork) {
       isHostCallbackScheduled = true;
+      // 执行过期任务队列
       requestHostCallback(flushWork);
     }
   }

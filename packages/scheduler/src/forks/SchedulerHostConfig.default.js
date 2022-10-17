@@ -52,6 +52,7 @@ if (
       }
     }
   };
+  // 非浏览器环境, 使用 setTimeout 模拟 requestIdleCallback
   requestHostCallback = function(cb) {
     if (_callback !== null) {
       // Protect against re-entrancy.
@@ -224,7 +225,7 @@ if (
   const port = channel.port2;
   channel.port1.onmessage = performWorkUntilDeadline;
 
-  // 请求及时回调
+  // 请求及时回调(处理过期任务)
   requestHostCallback = function(callback) {
     // 1. 保存callback, 会在 performWorkUntilDeadline 中执行
     scheduledHostCallback = callback;
@@ -240,7 +241,7 @@ if (
     scheduledHostCallback = null;
   };
 
-  // 请求延时回调
+  // 请求延时回调(处理未过期任务)
   requestHostTimeout = function(callback, ms) {
     taskTimeoutID = setTimeout(() => {
       callback(getCurrentTime());
