@@ -280,8 +280,8 @@ function unstable_wrapCallback(callback) {
 }
 
 function unstable_scheduleCallback(priorityLevel, callback, options) {
+  // 当前时间
   var currentTime = getCurrentTime();
-
   // 任务开始时间
   var startTime;
   if (typeof options === 'object' && options !== null) {
@@ -321,6 +321,7 @@ function unstable_scheduleCallback(priorityLevel, callback, options) {
   // 任务过期时间 = 开始时间 + 超时时间
   var expirationTime = startTime + timeout;
 
+  // 创建新任务
   var newTask = {
     id: taskIdCounter++,
     callback,
